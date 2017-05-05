@@ -1,0 +1,171 @@
+The Grand Finale
+================
+
+We want to keep track of questions, and we want the function to show the ``/next_guvi`` to be general.  To do this, let's make a
+dictionary with questions (as keys) and tuples of answers (as corresponding values). 
+
+We will have a main function that will determine whether we should go to 1) the next question or 2) the end page (if there are 
+no more questions).
+
+We will request ``/next_guvi``with 1) the correct question number and 2) the correct question.  After each question is answered, 
+we will "pop" that key/value pair from the dictionary.
+
+We will need to have different processing for GET and POST requests for ``/next_guvi``.  For GET requests, we want to
+generate the correct question/answer form, and for the POST requests, we want to write data to file, then redirect
+the user to either the next question or the end page.
+
+I hope I haven't lost you!  Let's do it step-by-step, but you won't be able to run anything till the end of this page.
+
+Make the end HTML file
+----------------------
+
+Create a file called ``end_guvi.html`` in the templates directory. Make it look like this::
+    
+    <!doctype html>
+    <title>A short quiz</title>
+    <link rel=stylesheet type=text/css href='{{ url_for('static',filename='style_guvi.css')}}'>
+    <div class=page>
+      <h1>A short quiz</h1>
+      <div class=metanav>
+	<h4>
+	  Thank you for participating!
+	</h4>
+      </div>
+    </div>
+
+It's really pretty straightforward.  Nothing fancy here.  But, we need to link to it.
+
+Link to the end page
+--------------------
+
+If you don't believe me, you can try out linking to the end page::
+
+    from flask import Flask,render_template,request,redirect
+    app_guvi = Flask(__name__)
+
+    app_guvi.vars={}
+
+    @app_guvi.route('/index_guvi',methods=['GET','POST'])
+    def index_guvi():
+        nquestions=5
+        if request.method == 'GET':
+            return render_template('userinfo_guvi.html',num=nquestions)
+        else:
+            #request was a POST                                                                                                                                   
+            app_guvi.vars['name'] = request.form['name_guvi']
+            app_guvi.vars['age'] = request.form['age_guvi']
+
+            f = open('%s_%s.txt'%(app_guvi.vars['name'],app_guvi.vars['age']),'w')
+            f.write('Name: %s\n'%(app_guvi.vars['name']))
+            f.write('Age: %s\n\n'%(app_guvi.vars['age']))
+            f.close()
+
+            return render_template('layout_guvi.html',num=1,question='How many eyes do you have?',ans1='1',\
+	       ans2='2',ans3='3')
+
+    @app_guvi.route('/next_guvi',methods=['POST'])
+    def next_guvi():
+        return redirect('/usefulfunction_guvi')
+
+    @app_guvi.route('/usefulfunction_guvi',methods=['GET','POST'])
+    def usefulfunction_guvi():
+        return render_template('end_guvi.html')
+
+    if __name__ == "__main__":
+        app_guvi.run(debug=True)
+
+You can try running this.  It will ask you the first question, and when you click Next, it will take you to the End page
+we just made.
+
+Now the final program, for real
+-------------------------------
+
+Open ``application_guvi.py`` one last time.  Change the contents to look like::
+
+    from flask import Flask,render_template,request,redirect
+    app_guvi = Flask(__name__)
+
+    app_guvi.vars={}
+
+    app_guvi.questions={}
+    app_guvi.questions['How many eyes do you have?']=('1','2','3')
+    app_guvi.questions['Which fruit do you like best?']=('banana','mango','pineapple')
+    app_guvi.questions['Do you like cupcakes?']=('yes','no','maybe')
+
+    app_guvi.nquestions=len(app_guvi.questions)
+    # should be 3
+
+    @app_guvi.route('/index_guvi',methods=['GET','POST'])
+    def index_guvi():
+        nquestions=app_guvi.nquestions
+        if request.method == 'GET':
+            return render_template('userinfo_guvi.html',num=nquestions)
+        else:
+            # request was a POST
+            app_guvi.vars['name'] = request.form['name_guvi']
+            app_guvi.vars['age'] = request.form['age_guvi']
+            
+            f = open('%s_%s.txt'%(app_guvi.vars['name'],app_guvi.vars['age']),'w')
+            f.write('Name: %s\n'%(app_guvi.vars['name']))
+            f.write('Age: %s\n\n'%(app_guvi.vars['age']))
+            f.close()
+            
+            return redirect('/main_guvi')
+
+    @app_guvi.route('/main_guvi')
+    def main_guvi2():
+        if len(app_guvi.questions)==0 : return render_template('end_guvi.html')
+        return redirect('/next_guvi')
+
+    #####################################
+    ## IMPORTANT: I have separated /next_guvi INTO GET AND POST
+    ## You can also do this in one function, with If and Else
+    ## The attribute that contains GET and POST is: request.method
+    #####################################
+
+    @app_guvi.route('/next_guvi',methods=['GET'])
+    def next_guvi(): #remember the function name does not need to match the URL
+        # for clarity (temp variables)
+        n = app_guvi.nquestions - len(app_guvi.questions) + 1
+        q = list(app_guvi.questions.keys())[0] #python indexes at 0
+        a1, a2, a3 = list(app_guvi.questions.values())[0] #this will return the answers corresponding to q
+
+        # save the current question key
+        app_guvi.currentq = q
+
+        return render_template('layout_guvi.html',num=n,question=q,ans1=a1,ans2=a2,ans3=a3)
+
+    @app_guvi.route('/next_guvi',methods=['POST'])
+    def next_guvi2():  #can't have two functions with the same name
+        # Here, we will collect data from the user.
+        # Then, we return to the main function, so it can tell us whether to
+        # display another question page, or to show the end page.
+
+        f = open('%s_%s.txt'%(app_guvi.vars['name'],app_guvi.vars['age']),'a') #a is for append
+        f.write('%s\n'%(app_guvi.currentq))
+        f.write('%s\n\n'%(request.form['answer_from_layout_guvi'])) #this was the 'name' on layout.html!
+        f.close()
+
+        # Remove question from dictionary
+        del app_guvi.questions[app_guvi.currentq]
+
+        return redirect('/main_guvi')
+
+    if __name__ == "__main__":
+        app_guvi.run(debug=True)
+
+Try running it.  I HOPE IT WORKS FOR YOU, TOO!  If you look at the code here, you can hopefully follow which
+functions are being called as you click through the web application.  
+
+The questions are stored as a dictionary.  The questions are deleted after they are used, and the question
+number is determined by the number of key/value pairs in the dictionary.
+
+We have made a ``main_guvi`` function, which determined whether there are any questions left to ask.  If
+there are, it calls ``next_guvi`` and displays the form.  If there are no more questions, it shows the
+end page.
+
+When a question form page is shown, the user enters information and clicks on ``Next``.  The request is
+a POST method type, which calls the appropriate ``next_guvi`` function (``next_guvi2``) (that writes data 
+to file).  That function DOES NOT return automatically to another ``next_guvi`` HTML form page.  Instead,
+it ``redirects`` to the ``main_guvi`` function, which will tell it whether to return 1) ``end_guvi.html``
+or 2) another ``next_guvi`` HTML form page.

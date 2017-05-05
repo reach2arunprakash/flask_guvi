@@ -1,0 +1,101 @@
+Linking to the next question
+============================
+
+To link one question to the next, we need to tell the server what to do when ``/next_guvi`` is
+requested.  This will be a POST request, because we want to take data from the user.
+
+Open ``application_guvi.py`` and add this decorated function::
+
+    @app_guvi.route('/next_guvi',methods=['POST'])
+    def next_guvi():  #remember the function name does not need to match the URL                                                              
+        return render_template('layout_guvi.html',num=1,question='Which fruit do you like best?',ans1='banana',\
+	    ans2='mango',ans3='pineapple')
+
+In case it isn't clear, the whole file ``application_guvi.py`` should now look like::
+
+    from flask import Flask,render_template,request
+    app_guvi = Flask(__name__)
+
+    app_guvi.vars={}
+
+    @app_guvi.route('/index_guvi',methods=['GET','POST'])
+    def index_guvi():
+        nquestions=5
+        if request.method == 'GET':
+            return render_template('userinfo_guvi.html',num=nquestions)
+        else:
+            #request was a POST                                                                                                                                      
+            app_guvi.vars['name'] = request.form['name_guvi']
+            app_guvi.vars['age'] = request.form['age_guvi']
+
+            f = open('%s_%s.txt'%(app_guvi.vars['name'],app_guvi.vars['age']),'w')
+            f.write('Name: %s\n'%(app_guvi.vars['name']))
+            f.write('Age: %s\n\n'%(app_guvi.vars['age']))
+            f.close()
+
+            return render_template('layout_guvi.html',num=1,question='How many eyes do you have?',ans1='1',\
+	        ans2='2',ans3='3')
+
+    @app_guvi.route('/next_guvi',methods=['POST'])
+    def next_guvi():  #remember the function name does not need to match the URL                                                                                     
+        return render_template('layout_guvi.html',num=1,question='Which fruit do you like best?',ans1='banana',\
+	    ans2='mango',ans3='pineapple')
+
+    if __name__ == "__main__":
+        app_guvi.run(debug=True)
+
+Try running it.  IT WORKS, RIGHT?  But, when you click on Next after the fruit question, what do you get?  IT'S THE FRUIT QUESTION AGAIN.
+How can we fix this?  We need to somehow tell the application to keep track of the questions being asked.  We can make a list of 
+questions at the beginning, then iterate through them.
+
+What will come in handy now is to learn about the ``redirect`` function in Flask.  There's also ``url_for``, which you can
+Google yourself.  It's not necessary for now.
+
+Redirecting
+-----------
+
+The ``redirect`` function in Flask allows a decorated function (a function with ``@app_guvi.route('/index_guvi')`` or similar
+preceding the function) to return the HTML template that another function will produce.  Instead of calling ``render_template``
+to make an HTML page, we call ``redirect`` and insert the URL for another decorator function, which will call that decorated
+function and return the associated HTML code.
+
+Here's an example.  We take the previous code and we just add one more step, which redirects to another function
+to give the rendered template::
+
+    from flask import Flask,render_template,request,redirect
+    app_guvi = Flask(__name__)
+
+    app_guvi.vars={}
+
+    @app_guvi.route('/index_guvi',methods=['GET','POST'])
+    def index_guvi():
+        nquestions=5
+        if request.method == 'GET':
+            return render_template('userinfo_guvi.html',num=nquestions)
+        else:
+            #request was a POST                                                                                                                                   
+            app_guvi.vars['name'] = request.form['name_guvi']
+            app_guvi.vars['age'] = request.form['age_guvi']
+
+            f = open('%s_%s.txt'%(app_guvi.vars['name'],app_guvi.vars['age']),'w')
+            f.write('Name: %s\n'%(app_guvi.vars['name']))
+            f.write('Age: %s\n\n'%(app_guvi.vars['age']))
+            f.close()
+
+            return render_template('layout_guvi.html',num=1,question='How many eyes do you have?',ans1='1',\
+	        ans2='2',ans3='3')
+
+    @app_guvi.route('/next_guvi',methods=['POST'])
+    def next_guvi():
+        return redirect('/usefulfunction_guvi')
+    @app_guvi.route('/usefulfunction_guvi',methods=['GET','POST'])
+    def usefulfunction_guvi():
+        return render_template('layout_guvi.html',num=1,question='Which fruit do you like best?',ans1='banana',\
+	    ans2='mango',ans3='pineapple')
+
+    if __name__ == "__main__":
+        app_guvi.run(debug=True)
+
+I think that's most of the FLASK-ESQUE stuff.  The rest is all PYTHON.  In the next section, we'll put some of this stuff together,
+using Python dictionaries to make the question-asking scalable (easier to add more questions), and to automate the process
+for many questions.

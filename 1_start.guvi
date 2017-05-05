@@ -1,0 +1,211 @@
+Flask tutorial
+================================
+
+This tutorial is meant for people who have a good understanding of Python,
+but who have never done web programming before.  You should know static HTML, 
+but it is not necessary to know about forms, requests, and methods.
+
+Some of the key things that you need to make clear in your head are..
+
+- how the different functions are called based on "GET" and "POST" requests
+- what a "request" was
+- how HTML pages are rendered and returned
+- how to use Python as the machinery to decide which function to call (and thus
+  which HTML template to return)
+
+After a short visit with a simple "Hello World" application, we will build a quiz
+application that will demonstrate "GET" and "POST" requests, rendering HTML templates,
+and redirecting to other functions that will render the appropriate HTML 
+templates.  User input will determine the HTML pages that are returned, and 
+the data will be written to a text file on the server side.
+
+Some housekeeping 
+-----------------
+
+I hate programming tutorials that use function and instance names that look like offical names.  There are so many function names and instances in tutorials that are totally user-defined.  
+
+Basically::
+
+    Name it whatever-you-want, and it will still work!  
+
+Instead of using willy-nilly names like "guvi", I will append "_guvi" to 
+the end of logical names, so it will be entirely obvious which names can be 
+changed with no penalty.  And, it will give you an idea of what "real"
+programmers might use to call a certain function (hint: just drop the "_guvi").
+Naming things well is certainly a skill to be desired.
+
+Just realize, if you change the name of the file from hello_guvi.py
+to something else, like flufflepuff.py, make sure to mentally make that
+change for the rest of the tutorial.
+
+
+Assignment 1: 
+
+Install Python , Virtual Env , Flask and its associated packages.
+
+
+Installing Flask
+----------------------
+Okay, let's get started!
+
+If you haven't yet, go ahead and install Python.
+
+$ flask/bin/pip install flask
+$ flask/bin/pip install flask-login
+$ flask/bin/pip install flask-openid
+$ flask/bin/pip install flask-mail
+$ flask/bin/pip install flask-sqlalchemy
+$ flask/bin/pip install sqlalchemy-migrate
+$ flask/bin/pip install flask-whooshalchemy
+$ flask/bin/pip install flask-wtf
+$ flask/bin/pip install flask-babel
+$ flask/bin/pip install guess_language
+$ flask/bin/pip install flipflop
+$ flask/bin/pip install coverage
+
+If you are on Windows the commands are slightly different:
+
+$ flask\Scripts\pip install flask
+$ flask\Scripts\pip install flask-login
+$ flask\Scripts\pip install flask-openid
+$ flask\Scripts\pip install flask-mail
+$ flask\Scripts\pip install flask-sqlalchemy
+$ flask\Scripts\pip install sqlalchemy-migrate
+$ flask\Scripts\pip install flask-whooshalchemy
+$ flask\Scripts\pip install flask-wtf
+$ flask\Scripts\pip install flask-babel
+$ flask\Scripts\pip install guess_language
+$ flask\Scripts\pip install flipflop
+$ flask\Scripts\pip install coverage
+
+These commands will download and install all the packages that we will use for our application.
+
+A Quick Note about Debug Mode
+-----------------------------
+In this tutorial, you'll be running your app in Debug Mode.  This is very helpful
+for you - it means that if the server hits an error, it will give you a detailed 
+message instead of just "500 - Internal Server Error" or something similarly 
+non-obvious.  However, it's important to note that debug mode is HIGHLY 
+INSECURE, and should absolutely never be used on production machines.  If that 
+doesn't mean much to you, don't worry about it - you won't be running on 
+production machines in this tutorial.  
+
+
+
+Assignment 2: 
+
+Create a Hello World using Flask - Blind Run
+
+Hello world
+-----------
+
+Open a file called hello_guvi.py.  Type the following::
+
+    from flask import Flask
+    app_guvi = Flask(__name__)
+
+    @app_guvi.route('/hello_page_guvi')
+    def hello_world_guvi():
+    	# this is a comment, just like in Python
+	# note that the function name and the route argument
+	# do not need to be the same.
+        return 'Hello World!'
+
+    if __name__ == '__main__':
+        app_guvi.run(debug=True)
+
+Now, run the code from command line using::
+
+    >> python hello_guvi.py
+
+Running this code will start a server at: 127.0.0.1:5000/hello_page_guvi.  If you 
+visit that address in a browser window, you should see a blank screen with 
+text at the top left corner, which says "Hello World!" 
+
+Note that the ``@app_guvi.route('/hello_page_guvi')`` is showing which code to run (in this 
+case, ``hello_world_guvi``) when the URL ``/hello_page_guvi`` is requested.  (A request is made 
+when the URL is visited.)
+
+When the URL is visited, the code is run, and a string is returned.  The 
+string is the HTML code for the page.  Since HTML does not parse white space,
+one long string will translate to an HTML page easily.
+
+
+
+Short note on browsers
+----------------------
+
+127.0.0.1 is Home, or your own computer.  5000 is the port number.  Flask
+puts the server on Port 5000 as the default. I'm not going to talk a lot 
+about this (actually I'm not going to talk at all about this), because you 
+can play with this on your own later.
+
+Assignment 3: 
+ Understand the Flask structure 
+ 
+Conventions
+
+    All examples in this tutorial utilize a Unix-style prompt: $ python hello-world.py. Remember that the dollar sign is not part of the command, and the equivalent command in Windows is: C:\Sites> python hello-world.py.
+
+    All examples are coded in Sublime Text 3.
+
+    All examples utilize Python 2.7.7. You can use any version of 2.7.x, though.
+	
+
+Structure
+
+If you’re familiar with Django, web2py, or any other high-level (or full-stack) framework, then you know that each impose a specific structure. Due to it’s minimalist nature, however, Flask does not provide a set structure, which can be difficult for beginners. Fortunately, it’s fairly easy to figure out, especially if you use a single file for the Flask components.
+
+Create the following project structure within the “flask-intro” folder:
+
+.
+├── app.py
+├── static
+└── templates
+
+Here, we simply have a single file for our Flask app called app.py and then two folders, “static” and “templates”. The former houses our stylesheets, Javascript files, and images, while the latter is for HTML files. This is a good base to start with. We’re already thinking in terms of front vs. back-end. The app.py will utilize the Model-View-Controller (MVC) design pattern in the back-end to handle requests and dish out responses to the end user.
+
+Put simply, when a request comes in, the controller, which handles our app’s business logic, decides how to handle it.
+
+For example, the controller could communicate directly with a database (like MySQL, SQLite, PostgreSQL, MongoDB, etc.) to obtain the requested data and return a response, via the views, with the appropriate data in the appropriate format (like HTML or JSON). Or perhaps the end user’s request is for a resource that does not exist – in which case the controller will respond with a 404 error.
+
+Starting with this structure will help with scaling your app out into separate files and folders, since there’s already a logical separation between the front and back-end. If you’re unfamiliar with the MVC pattern, read more about it here. Get used to it as almost every web framework utilizes some form of MVC.
+Routes
+
+Open your favorite editor and add the following code to your app.py file:
+
+# import the Flask class from the flask module
+from flask import Flask, render_template
+
+# create the application object
+app = Flask(__name__)
+
+# use decorators to link the function to a url
+@app.route('/')
+def home():
+    return "Hello, World!"  # return a string
+
+@app.route('/welcome')
+def welcome():
+    return render_template('welcome.html')  # render a template
+
+# start the server with the 'run()' method
+if __name__ == '__main__':
+    app.run(debug=True)
+
+This is fairly straightforward.
+
+After importing the Flask class, we create (or instantiate) the application object, define the views to respond to requests, then start the server.
+
+The route decorators are used to associate (or map) a URL to a function. The URL / is associated with the home() function, so when the end user requests that URL, the view will respond with a string. Similarly, when the /welcome URL is requested, the view will render the welcome.html template.
+
+In short, the main application object is instantiated which is then used to map URLs to functions.
+
+Test
+
+Time for a sanity check. Fire up your development server:
+
+$ python app.py
+
+Navigate to http://localhost:5000/. You should see “Hello, World!” staring back at you. Then request the next URL, http://localhost:5000/welcome. You should see, a “TemplateNotFound” error. Why? Because we have not set up our template, welcome.html. Flask is looking for it, but it’s not there. Let’s do that. First, kill the server by pressing CTRL+C from your terminal.
+
