@@ -8,3 +8,9 @@ You should go through the tutorial in the following order:
 - nextquestion.guvi
 - finale.guvi
 - wrapup.guvi
+
+
+
+create your profile in www.guvi.in and update your github repos to get better job opportunities  
+
+
